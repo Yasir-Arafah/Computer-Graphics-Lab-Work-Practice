@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>20200104042_Yasir Arafah</title>
+</head>
+<body>
+<canvas id="webglcanvas" width="500" height="500"></canvas>
+
+<script>
+    var canvas = document.getElementById("webglcanvas"); // Get the canvas element
+    var gl = canvas.getContext("webgl"); // Get the WebGL context
+
+    // Vertex shader source code
+    var vertexShaderSource =
+       `attribute vec3 a_coords;
+        attribute vec3 a_colors;
+        uniform mat4 u_Scale;
+        uniform mat4 u_Translation;
+        uniform mat4 u_RotY;
+        uniform mat4 u_RotX;
+        varying vec3 v_color;
+        
+        void main() {
+            gl_Position = u_Translation * u_RotX * u_RotY * u_Scale * vec4(a_coords, 1.0);
+            v_color = a_colors;
+        }`;
+
+    // Fragment shader source code
+    var fragmentShaderSource =
+       `precision mediump float;
+        varying vec3 v_color;
+        void main() {
+            gl_FragColor = vec4(v_color, 1.0);
+        }`;
+
+    var vsh = gl.createShader(gl.VERTEX_SHADER); // Create a vertex shader
+    gl.shaderSource(vsh, vertexShaderSource); // Set the vertex shader source code
+    gl.compileShader(vsh); // Compile the vertex shader
+
+    var fsh = gl.createShader(gl.FRAGMENT_SHADER); // Create a fragment shader
+    gl.shaderSource(fsh, fragmentShaderSource); // Set the fragment shader source code
+    gl.compileShader(fsh); // Compile the fragment shader
+
+    var prog = gl.createProgram(); // Create a program
+    gl.attachShader(prog, vsh); // Attach the vertex shader to the program
+    gl.attachShader(prog, fsh); // Attach the fragment shader to the program
+    gl.linkProgram(prog); // Link the program
+    gl.useProgram(prog); // Use the program
+
+    var a_coords_location = gl.getAttribLocation(prog, "a_coords"); // Get the location of the a_coords attribute in the program
+    var coords = new Float32Array([
+        // Front face
+        -0.5, -0.5,  0.5, // Vertex 0: Bottom-left-front
+         0.5, -0.5,  0.5, // Vertex 1: Bottom-right-front
+         0.5,  0.5,  0.5, // Vertex 2: Top-right-front
+        -0.5,  0.5,  0.5, // Vertex 3: Top-left-front
+
+        // Back face
+        -0.5, -0.5, -0.5, // Vertex 4: Bottom-left-back
+        -0.5,  0.5, -0.5, // Vertex 5: Top-left-back
+         0.5,  0.5, -0.5, // Vertex 6: Top-right-back
+         0.5, -0.5, -0.5, // Vertex 7: Bottom-right-back
+
+        // Top face
+        -0.5,  0.5, -0.5, // Vertex 8: Top-left-back
+        -0.5,  0.5,  0.5, // Vertex 9: Top-left-front
+         0.5,  0.5,  0.5, // Vertex 10: Top-right-front
+         0.5,  0.5, -0.5, // Vertex 11: Top-right-back
+
+        // Bottom face
+        -0.5, -0.5, -0.5, // Vertex 12: Bottom-left-back
+         0.5, -0.5, -0.5, // Vertex 13: Bottom-right-back
+         0.5, -0.5,  0.5, // Vertex 14: Bottom-right-front
+        -0.5, -0.5,  0.5, // Vertex 15: Bottom-left-front
+
+        // Right face
+         0.5, -0.5, -0.5, // Vertex 16: Bottom-right-back
+         0.5,  0.5, -0.5, // Vertex 17: Top-right-back
+         0.5,  0.5,  0.5, // Vertex 18: Top-right-front
+         0.5, -0.5,  0.5, // Vertex 19: Bottom-right-front
+
+        // Left face
+        -0.5, -0.5, -0.5, // Vertex 20: Bottom-left-back
+        -0.5, -0.5,  0.5, // Vertex 21: Bottom-left-front
+        -0.5,  0.5,  0.5, // Vertex 22: Top-left-front
+        -0.5,  0.5, -0.5  // Vertex 23: Top-left-back
+    ]); // Define the coordinates of the cube vertices
+
+    var a_coords_buffer = gl.createBuffer(); // Create a buffer for the coordinates
+    gl.bindBuffer(gl.ARRAY_BUFFER, a_coords_buffer); // Bind the buffer to the ARRAY_BUFFER target
+    gl.bufferData(gl.ARRAY_BUFFER, coords, gl.STATIC_DRAW); // Set the data for the buffer
+    gl.vertexAttribPointer(a_coords_location, 3, gl.FLOAT, false, 0, 0); // Define how to read the data from the buffer
+    gl.enableVertexAttribArray(a_coords_location); // Enable the a_coords attribute
+
+    var a_colors_location = gl.getAttribLocation(prog, "a_colors"); // Get the location of the a_colors attribute in the program
+    var colors = new Float32Array([
+        // Front face
+        1.0, 0.0, 0.0,  // Red
+        1.0, 0.0, 0.0,  // Red
+        1.0, 0.0, 0.0,  // Red
+        1.0, 0.0, 0.0,  // Red
+
+        // Back face
+        0.0, 1.0, 0.0,  // Green
+        0.0, 1.0, 0.0,  // Green
+        0.0, 1.0, 0.0,  // Green
+        0.0, 1.0, 0.0,  // Green
+
+        // Top face
+        0.0, 0.0, 1.0,  // Blue
+        0.0, 0.0, 1.0,  // Blue
+        0.0, 0.0, 1.0,  // Blue
+        0.0, 0.0, 1.0,  // Blue
+
+        // Bottom face
+        1.0, 1.0, 0.0,  // Yellow
+        1.0, 1.0, 0.0,  // Yellow
+        1.0, 1.0, 0.0,  // Yellow
+        1.0, 1.0, 0.0,  // Yellow
+
+        // Right face
+        1.0, 0.0, 1.0,  // Magenta
+        1.0, 0.0, 1.0,  // Magenta
+        1.0, 0.0, 1.0,  // Magenta
+        1.0, 0.0, 1.0,  // Magenta
+
+        // Left face
+        0.0, 1.0, 1.0,  // Cyan
+        0.0, 1.0, 1.0,  // Cyan
+        0.0, 1.0, 1.0,  // Cyan
+        0.0, 1.0, 1.0   // Cyan
+    ]); // Define the colors for each vertex
+
+    var a_colors_buffer = gl.createBuffer(); // Create a buffer for the colors
+    gl.bindBuffer(gl.ARRAY_BUFFER, a_colors_buffer); // Bind the buffer to the ARRAY_BUFFER target
+    gl.bufferData(gl.ARRAY_BUFFER, colors, gl.STATIC_DRAW); // Set the data for the buffer
+    gl.vertexAttribPointer(a_colors_location, 3, gl.FLOAT, false, 0, 0); // Define how to read the data from the buffer
+    gl.enableVertexAttribArray(a_colors_location); // Enable the a_colors attribute
+
+    var indices = new Uint8Array([
+        // Front face
+        0, 1, 2,    0, 2, 3,
+        // Back face
+        4, 5, 6,    4, 6, 7,
+        // Top face
+        8, 9, 10,   8, 10, 11,
+        // Bottom face
+        12, 13, 14, 12, 14, 15,
+        // Right face
+        16, 17, 18, 16, 18, 19,
+        // Left face
+        20, 21, 22, 20, 22, 23
+    ]); // Define the indices for the cube faces
+    var bufferInd = gl.createBuffer(); // Create a buffer for the indices
+    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, bufferInd); // Bind the buffer to the ELEMENT_ARRAY_BUFFER target
+    gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, indices, gl.STATIC_DRAW); // Set the data for the buffer
+
+    var u_rotateY_location = gl.getUniformLocation(prog, "u_RotY"); // Get the location of the u_RotY uniform in the program
+    var u_rotateX_location = gl.getUniformLocation(prog, "u_RotX"); // Get the location of the u_RotX uniform in the program
+    var u_translation_location = gl.getUniformLocation(prog, "u_Translation"); // Get the location of the u_Translation uniform in the program
+    var u_scale_location = gl.getUniformLocation(prog, "u_Scale"); // Get the location of the u_Scale uniform in the program
+
+    var xs = 1.0;
+    var ys = 1.0;
+    var zs = 1.0;
+    var scaleMatrix = new Float32Array([
+        xs, 0.0, 0.0, 0.0,
+        0.0, ys, 0.0, 0.0, 
+        0.0, 0.0, zs, 0.0,
+        0.0, 0.0, 0.0, 1.0
+    ]); // Define the initial scale matrix
+    gl.uniformMatrix4fv(u_scale_location, false, scaleMatrix); // Set the scale matrix
+
+    var translationMatrix = new Float32Array([
+        1.0, 0.0, 0.0, 0.0,
+        0.0, 1.0, 0.0, 0.0, 
+        0.0, 0.0, 1.0, 0.0,
+        0.0, 0.0, 0.0, 1.0
+    ]); // Define the initial translation matrix (identity matrix)
+    gl.uniformMatrix4fv(u_translation_location, false, translationMatrix); // Set the translation matrix
+
+    var thetaY = 45;
+    var radY = thetaY * Math.PI / 180; // Convert thetaY to radians
+    var rotateYMatrix = new Float32Array([
+        Math.cos(radY),  0.0,  -Math.sin(radY),  0.0,
+        0.0,            1.0,   0.0,            0.0,
+        Math.sin(radY),  0.0,   Math.cos(radY),  0.0,
+        0.0,            0.0,   0.0,            1.0 
+    ]); // Define the rotation matrix around the Y axis
+    gl.uniformMatrix4fv(u_rotateY_location, false, rotateYMatrix); // Set the rotation matrix around the Y axis
+
+    var thetaX = 45;
+    var radX = thetaX * Math.PI / 180; // Convert thetaX to radians
+    var rotateXMatrix = new Float32Array([
+        1.0, 0.0, 0.0, 0.0,
+        0.0, Math.cos(radX), Math.sin(radX), 0.0,
+        0.0, -Math.sin(radX), Math.cos(radX),  0.0,
+        0.0, 0.0, 0.0, 1.0 
+    ]); // Define the rotation matrix around the X axis
+    gl.uniformMatrix4fv(u_rotateX_location, false, rotateXMatrix); // Set the rotation matrix around the X axis
+
+    gl.clearColor(1.0, 1.0, 1.0, 1.0); // Set the clear color to white
+    gl.enable(gl.DEPTH_TEST); // Enable depth testing
+    gl.enable(gl.CULL_FACE); // Enable face culling
+
+    function drawScene() {
+        gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT); // Clear the color and depth buffers
+
+        // Draw the border cube (slightly larger and black)
+        var borderScale = 1.05; // Scale factor for the border
+        var borderScaleMatrix = new Float32Array([
+            xs * borderScale, 0.0, 0.0, 0.0,
+            0.0, ys * borderScale, 0.0, 0.0, 
+            0.0, 0.0, zs * borderScale, 0.0,
+            0.0, 0.0, 0.0, 1.0
+        ]); // Define the scale matrix for the border
+        gl.uniformMatrix4fv(u_scale_location, false, borderScaleMatrix); // Set the border scale matrix
+        var borderColors = new Float32Array(coords.length / 3 * 3).fill(0.0); // Set all border colors to black
+        var borderColorsBuffer = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, borderColorsBuffer);
+        gl.bufferData(gl.ARRAY_BUFFER, borderColors, gl.STATIC_DRAW);
+        gl.vertexAttribPointer(a_colors_location, 3, gl.FLOAT, false, 0, 0);
+        gl.enableVertexAttribArray(a_colors_location);
+        gl.drawElements(gl.TRIANGLES, indices.length, gl.UNSIGNED_BYTE, 0); // Draw the border cube
+
+        // Draw the actual cube (original scale and face colors)
+        gl.uniformMatrix4fv(u_scale_location, false, scaleMatrix); // Set the original scale matrix
+        gl.bindBuffer(gl.ARRAY_BUFFER, a_colors_buffer); // Rebind the original colors buffer
+        gl.vertexAttribPointer(a_colors_location, 3, gl.FLOAT, false, 0, 0);
+        gl.enableVertexAttribArray(a_colors_location);
+        gl.drawElements(gl.TRIANGLES, indices.length, gl.UNSIGNED_BYTE, 0); // Draw the actual cube
+    }
+
+    function updateRotation() {
+        radX = thetaX * Math.PI / 180; // Convert thetaX to radians
+        rotateXMatrix = new Float32Array([
+            1.0, 0.0, 0.0, 0.0,
+            0.0, Math.cos(radX), Math.sin(radX), 0.0,
+            0.0, -Math.sin(radX), Math.cos(radX),  0.0,
+            0.0, 0.0, 0.0, 1.0 
+        ]); // Define the rotation matrix around the X axis
+        gl.uniformMatrix4fv(u_rotateX_location, false, rotateXMatrix); // Set the rotation matrix around the X axis
+
+        radY = thetaY * Math.PI / 180; // Convert thetaY to radians
+        rotateYMatrix = new Float32Array([
+            Math.cos(radY),  0.0,  -Math.sin(radY),  0.0,
+            0.0,            1.0,   0.0,            0.0,
+            Math.sin(radY),  0.0,   Math.cos(radY),  0.0,
+            0.0,            0.0,   0.0,            1.0 
+        ]); // Define the rotation matrix around the Y axis
+        gl.uniformMatrix4fv(u_rotateY_location, false, rotateYMatrix); // Set the rotation matrix around the Y axis
+    }
+
+    addEventListener('keydown', function (e) {
+        switch (e.keyCode) {
+            case 40: // Down arrow key
+                thetaX += 5; // Rotate 5 degrees counterclockwise around the X axis
+                break;
+            case 39: // Right arrow key
+                thetaY += 5; // Rotate 5 degrees counterclockwise around the Y axis
+                break;
+        }
+
+        updateRotation(); // Update the rotation matrices
+        drawScene(); // Redraw the scene
+    }, true);
+
+    canvas.addEventListener('mousedown', function (e) {
+        if (e.button === 0) { // Left mouse button
+            if (xs <= 1.0) {
+                xs += 0.1;
+                ys += 0.1;
+                zs += 0.1;
+            }
+        } else if (e.button === 2) { // Right mouse button
+            if (xs > 0.2) {
+                xs -= 0.1;
+                ys -= 0.1;
+                zs -= 0.1;
+            }
+        }
+
+        scaleMatrix = new Float32Array([
+            xs, 0.0, 0.0, 0.0,
+            0.0, ys, 0.0, 0.0, 
+            0.0, 0.0, zs, 0.0,
+            0.0, 0.0, 0.0, 1.0
+        ]); // Define the scale matrix
+        gl.uniformMatrix4fv(u_scale_location, false, scaleMatrix); // Set the scale matrix
+
+        drawScene(); // Redraw the scene
+    }, false);
+
+    canvas.addEventListener('contextmenu', function (e) {
+        e.preventDefault(); // Prevent the context menu from appearing on right-click
+    }, false);
+
+    drawScene(); // Initial draw of the scene
+</script>
+
+</body>
+</html>
